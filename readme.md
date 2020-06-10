@@ -13,4 +13,5 @@ This repository contains an application in which LHR's are downloaded from WMS f
 This class, defined in OCLC_Service.php contains the knitty gritty of HMAC and token 
 authorization. All classes described below are extensions of OCLC_Service.
 
+## Other
 
