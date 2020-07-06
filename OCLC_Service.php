@@ -12,13 +12,12 @@ class OCLC_Service {
   private $error_log = __DIR__.'/service_errors';
   private $logging = 'all'; //'none','errors','all' (not yet implemented
 
-  //must be provided as parameters in $patron = new Patron($wskey,$secret,$ppid), see __construct
   public $wskey = null;
   private $secret = null;
   private $ppid = null;
 
-  private $authorizationHeader = '';
   private $token_authorization = '';
+  private $authorizationHeader = '';
 
   public $institution = "57439";
   public $defaultBranch = "262638";
@@ -42,7 +41,7 @@ class OCLC_Service {
   public function __construct($key_file) {
 
     require(__DIR__.'/'.$key_file);
-    $this->wskey = $config['wskey'];
+    if (array_key_exists('wskey',$config)) $this->wskey = $config['wskey'];
     if (array_key_exists('secret',$config)) $this->secret = $config['secret'];
     if (array_key_exists('ppid',$config)) $this->ppid = $config['ppid'];
     if (array_key_exists('ppid_ns',$config)) {
@@ -60,6 +59,7 @@ class OCLC_Service {
 
     'institution' => $this->institution,
     'defaultBranch' => $this->defaultBranch,
+    'ppid' => $this->ppid,
 
     'ppid_namespace' => $this->ppid_namespace,
     'authorizationHeader' => $this->authorizationHeader,
