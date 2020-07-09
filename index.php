@@ -30,51 +30,58 @@ $xml_open = '<?xml version="1.0" encoding="UTF-8" ?>'."\n".
 $xml_close = '</marc:collection>';
 
 //check export file
-//name is api.export.*.xml 
+//name is api.export.*.xml
 $file_name = '';
 $here = getcwd();
-$output = '';
+$message = '';
 $command = '';
 if (array_key_exists('action',$_GET) && ($_GET['action'] == 'send')) {
   /*the send button is clicked, so
-      close the file
-      make a mrc file with marcedit
-      move the file to the archive_dir
+  close the file
+  make a mrc file with marcedit
+  move the file to the archive_dir
   */
   chdir($marcxml_dir);
   //collect the file name
   $files = glob('api.export.*.xml');
   //back to the working directory
   chdir($here);
-  
+
   if (count($files) == 0) {
-    $output = "Directory '$marcxml_dir' does not contain an export file.";
+    $message = "Directory '$marcxml_dir' does not contain an export file.";
   }
   else if (count($files) == 1) {
     $file_name = $files[0];
     //add the last line in $closexml
     file_put_contents($marcxml_dir.'/'.$file_name, $xml_close, FILE_APPEND);
-    
+
     //the file is converted to a file with the same name but extension '.mrc'
     $dest_name = preg_replace('/\.xml$/', '.mrc', $file_name);
-    
-    //convert: cmarcedit -s .filename.xml -d .filename.mrc -xmlmarc
-    $command = 'cmarcedit -s '.$marcxml_dir.'/'.$file_name.' -d '.$mrc_dir.'/'.$dest_name.' -xmlmarc';
-    $output = shell_exec($command);
 
-    //move to archive
-    chdir($archive_dir);
-    $files = glob($file_name.'.*');
-    chdir($here);
-    $moved = rename($marcxml_dir.'/'.$file_name,$archive_dir.'/'.$file_name.'.'.count($files));
-    
-    // remove all session variables
-    session_unset();
-    // destroy the session
-    session_destroy();
+    //convert: cmarcedit -s .filename.xml -d .filename.mrc -xmlmarc
+    $command = '.\marcedit\cmarcedit -s '.$marcxml_dir.'/'.$file_name.' -d '.$mrc_dir.'/'.$dest_name.' -xmlmarc';
+    $output =  exec($command, $output_cm, $rv);
+    echo '['.join("\n", $output_cm).'] ';
+    echo $rv;
+    if ($rv == 0) {
+      $message = join("\n", $output_cm);
+      //move to archive
+      chdir($archive_dir);
+      $files = glob($file_name.'.*');
+      chdir($here);
+      $moved = rename($marcxml_dir.'/'.$file_name,$archive_dir.'/'.$file_name.'.'.count($files));
+
+      // remove all session variables
+      session_unset();
+      // destroy the session
+      session_destroy();
+    }
+    else {
+      $message = "Error: MarcEdit not available! ($rv)";
+    }
   }
   else {
-    $output = "Error: directory '$marcxml_dir' contains more then 1 file!";
+    $message = "Error: directory '$marcxml_dir' contains more then 1 file!";
   }
   //end of handling the send button
 }
@@ -97,7 +104,7 @@ else {
     $file_name = $files[0];
   }
   else {
-    $output = "Error: directory '$marcxml_dir' contains more then 1 file!";
+    $message = "Error: directory '$marcxml_dir' contains more then 1 file!";
   }
 }
 
@@ -115,23 +122,9 @@ $ocn = null;
 $already_exported = FALSE;
 if (array_key_exists('ocn',$_GET)) {
   $ocn = trim($_GET['ocn']);
-  if (!isset($_SESSION['count'])) {
-    //initialize session headers 
-    $_SESSION['count'] = 1;
-    $_SESSION['ocns'] = array($ocn);
-  }
-  else {
-    //check if this ocn was already exported
-    if (in_array($ocn, $_SESSION['ocns'])) {
-      $already_exported = TRUE;
-    }
-    else {
-      $_SESSION['count']++;
-      $_SESSION['ocns'][] = $ocn;
-    }
-  }
+  //check if this ocn was already exported
+  if (isset($_SESSION['ocns']) && in_array($ocn, $_SESSION['ocns'])) $already_exported = TRUE;
 }
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -159,7 +152,6 @@ if (array_key_exists('ocn',$_GET)) {
       <?php
       if ($ocn) {
         //decrease in order to increase when the ocn is really ok
-        $_SESSION['count']--;
         //did we do this ocn before?
         if ($already_exported) {
           echo "<p>OCN: '$ocn' is already exported.</p>";
@@ -172,18 +164,27 @@ if (array_key_exists('ocn',$_GET)) {
               $ldr = $bib->metadata_json["record"][0]["leader"][0];
               if (substr($ldr, 7, 1) == 'm') {
                 //only monograph are allowed in the export
-                
+
                 //now lhr's
                 $succeeded = $lhr->get_lhrs_of_ocn($ocn);
                 if ($succeeded) {
                   //convert to marcxml
                   $marc = $lhr->json2marc('marcxml');
                   if ($marc) {
-                    if (array_key_exists("holdingLocation",$lhr->collman["entries"][0]["content"]) && 
-                      ($lhr->collman["entries"][0]["content"]["holdingLocation"] == "NLVA")) {
+                    if (array_key_exists("holdingLocation",$lhr->collman["entries"][0]["content"]) &&
+                    ($lhr->collman["entries"][0]["content"]["holdingLocation"] == "NLVA")) {
                       //this is a valid lhr record
-                      $_SESSION['count']++;
-                      
+
+                      if (!isset($_SESSION['count'])) {
+                        //initialize session headers
+                        $_SESSION['count'] = 1;
+                        $_SESSION['ocns'] = array($ocn);
+                      }
+                      else {
+                        $_SESSION['count']++;
+                        $_SESSION['ocns'][] = $ocn;
+                      }
+
                       //export to file
                       file_put_contents($marcxml_dir.'/'.$file_name, $bib->metadata_str('marcxml') , FILE_APPEND);
                       file_put_contents($marcxml_dir.'/'.$file_name, $marc, FILE_APPEND);
@@ -194,7 +195,10 @@ if (array_key_exists('ocn',$_GET)) {
                       echo "<h5>API output LHR</h5>";
                       $html = str_replace(array('<','>'), array('&lt;','&gt;'), $marc);
                       echo "<pre>$html</pre>";
-                   }                    
+                    }
+                    else {
+                      echo "<p>Error: Could not get a valid LHR record on ocn '$ocn' from WorldCat. Please try again.</p>";
+                    }
                   }
                   else {
                     echo "<p>Error: Could not get a valid LHR record on ocn '$ocn' from WorldCat. Please try again.</p>";
@@ -223,8 +227,8 @@ if (array_key_exists('ocn',$_GET)) {
           }
         }
       }
-      else if (strlen($output) > 0) {
-        echo "<pre>$output</pre>";
+      else if (strlen($message) > 0) {
+        echo "<pre>$message</pre>";
       }
       ?>
     </div>
