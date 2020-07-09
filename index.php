@@ -61,8 +61,6 @@ if (array_key_exists('action',$_GET) && ($_GET['action'] == 'send')) {
     //convert: cmarcedit -s .filename.xml -d .filename.mrc -xmlmarc
     $command = '.\marcedit\cmarcedit -s '.$marcxml_dir.'/'.$file_name.' -d '.$mrc_dir.'/'.$dest_name.' -xmlmarc';
     $output =  exec($command, $output_cm, $rv);
-    echo '['.join("\n", $output_cm).'] ';
-    echo $rv;
     if ($rv == 0) {
       $message = join("\n", $output_cm);
       //move to archive
