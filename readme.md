@@ -6,9 +6,13 @@ For libraries using WMS, OCLC provides on a daily basis files with all new, dele
 
 With this application librarians can export one or more LHR's in a browser window and provide the file to another system they are using.
 
+## Only on windows
+
+The application only works on Windows, because it depends on marcedit for conversion from MARC xml to the mrc format. Marcedit must be installed or downloaded. Change the directory where the app can find marcedit in `index.php`.
+
 ## Dependencies
 * [MarcEdit](https://marcedit.reeset.net/) must be installed.
-* This app must be installed in a LAMP environment, i.g. [XAMP](https://www.apachefriends.org/index.html).
+* This app must be installed in a LAMP environment, like [XAMP](https://www.apachefriends.org/index.html).
 * [TWIG](https://twig.symfony.com) must be installed. 
 
 

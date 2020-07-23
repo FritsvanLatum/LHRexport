@@ -13,16 +13,16 @@ require_once 'Collman_Service.php';
 //the cmarcedit command, see: https://marcedit.reeset.net/cmarcedit-exe-using-the-command-line
 //$cmarcedit_command must contain the path to cmarcedit.exe
 $cmarcedit_command = '..\marcedit\cmarcedit';
-//
+
 $target = "mrc"; //default, change this in "xml" when you only want xml output or "mrk" for readable marc format
+
+$export_dir = './WMS_export';
 
 //first and last lines of the marcxml file
 $xml_open = '<?xml version="1.0" encoding="UTF-8" ?>'."\n".
 '<marc:collection xmlns:marc="http://www.loc.gov/MARC21/slim" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.loc.gov/MARC21/slim http://www.loc.gov/standards/marcxml/schema/MARC21slim.xsd">';
 $xml_close = '</marc:collection>';
 
-
-$export_dir = './WMS_export';
 //$marcxml_dir contains the marcxml file that is worked on
 $marcxml_dir = $export_dir.'/marcxml';
 //$result_dir contains the file that should be sent to OCLC
