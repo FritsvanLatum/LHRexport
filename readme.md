@@ -14,6 +14,7 @@ The application only works on Windows, because it depends on marcedit for conver
 * [MarcEdit](https://marcedit.reeset.net/) must be installed.
 * This app must be installed in a LAMP environment, like [XAMP](https://www.apachefriends.org/index.html).
 * [TWIG](https://twig.symfony.com) must be installed. 
+* Key files for authentication on the WMS API's must be provided.
 
 
 
