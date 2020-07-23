@@ -25,7 +25,7 @@ var query = document.location.search;
 
 /* hier geen ocn opnieuw invullen
 if (query.includes('ocn=')) {
-  editorProperties.startval = {ocn:ocn};
+editorProperties.startval = {ocn:ocn};
 }
 */
 
@@ -36,28 +36,24 @@ editor.on('ready',function() {
 
   // Hook up the submit button to log to the console
   $('#submitOCN').on('click',function() {
-	  ocn = editor.getEditor('root.ocn').getValue();
-    //if (ocn.length > 0)  {
-      //empty feedback div
-      $('#res').html("");
+    $('#res').html("");
+    $('#message').html("");
 
-      //Validate
-      var errors = editor.validate();
+    ocn = editor.getEditor('root.ocn').getValue();
 
-      if(errors.length) {
-        //collect and show error messages
-        if (debug) console.log(errors);
-        msg = '<p>Your request has NOT been sent. Correct the following fields.</p>';
-        errors.forEach(function(err) {
-          msg += '<p>' + editor.getEditor(err.path).schema.title + ': ' + err.message + '</p>';
-        });
-        $('#res').html(msg);
-      }
-      else {
-        var barcodeURL = document.location.origin + document.location.pathname+'?ocn='+ocn;
-        window.location.assign(barcodeURL);
-      }
-    //}
+    //Validate
+    var errors = editor.validate();
+
+    if(errors.length) {
+      //collect and show error messages
+      if (debug) console.log(errors);
+      msg = '<p>Your request has NOT been sent. Please provide an ocn.</p>';
+      $('#res').html(msg);
+    }
+    else {
+      var barcodeURL = document.location.origin + document.location.pathname+'?ocn='+ocn;
+      window.location.assign(barcodeURL);
+    }
   });
 
 
