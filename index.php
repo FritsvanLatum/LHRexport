@@ -154,21 +154,21 @@ else if (array_key_exists('ocn',$_GET)) {
     $succeeded = $bib->get_bib_ocn($ocn);
     if ($succeeded) {
       //check bib record
-      if (array_key_exists('entry', $bib->metadata) && array_key_exists('record', $bib->metadata_json)) {
+      if (array_key_exists('record', $bib->metadata_json)) {
         $ldr = $bib->metadata_json["record"][0]["leader"][0];
         if (substr($ldr, 7, 1) == 'm') {
           //only monograph are allowed in the export
-
+          $bib_ocn = '';
           //now lhr's
           $succeeded = $lhr->get_lhrs_of_ocn($ocn);
           if ($succeeded) {
             //convert to marcxml
-            $marc = $lhr->json2marc('marcxml');
+            $marc = $lhr->json2marc('marcxml',$bib->ocn_001);
             if ($marc) {
               if (array_key_exists("holdingLocation",$lhr->collman["entries"][0]["content"]) &&
               ($lhr->collman["entries"][0]["content"]["holdingLocation"] == "NLVA")) {
                 //this is a valid lhr record
-
+                
                 //session admin
                 $_SESSION['count']++;
                 $_SESSION['ocns'][] = $ocn;

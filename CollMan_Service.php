@@ -14,15 +14,15 @@ class Collection_Management_Service extends OCLC_Service {
   private $collman_method = 'GET';
   private $collman_params = ['q' => ''];
 
-    /*application/atom+xml
-    application/atom+json
-    application/xml
-    application/json*/
+  /*application/atom+xml
+  application/atom+json
+  application/xml
+  application/json*/
   public $collman_headers = ['Accept' => 'application/xml'];
   private $code = '';
   public $collman_xml = null;
   public $collman = null;
-  
+
   private $acq_status = [
   'unknown' => 0,
   'other_receipt_or_acquisition_status' => 1,
@@ -140,7 +140,7 @@ class Collection_Management_Service extends OCLC_Service {
         }
         //$result = str_replace(array("\n", "\r", "\t"), '', $result);
         //$result = trim(str_replace('"', "'", $result));  //??
-        
+
         if (strpos($this->collman_headers['Accept'],'json')) {
           //header is application/atom+json or application/json
           $received = json_decode($result,TRUE);
@@ -171,7 +171,7 @@ class Collection_Management_Service extends OCLC_Service {
     }
   }
 
-  public function json2marc($type = 'mrk') {
+  public function json2marc($type = 'mrk', $this_ocn = '') {
     $result = FALSE;
     if (strpos($this->collman_headers['Accept'],'atom+json') > 0) {
       if (array_key_exists("entries",$this->collman)) {
@@ -186,11 +186,17 @@ class Collection_Management_Service extends OCLC_Service {
               $parts = explode('?',$json["id"]);
               $parts = explode('/',$parts[0]);
               $json["lhr_id"] = end($parts);
-              
+
               //"bib": "\/bibs\/975369365",
               $parts = explode('/',$json["bib"]);
-              $json["ocn_id"] = end($parts);
-              
+              $json["ocn_number"] = end($parts);
+              //ocn
+              if (strlen($this_ocn) == 0) {
+                $json["ocn_id"] = 'ocn'.$json["ocn_number"];
+              }
+              else {
+                $json["ocn_id"] = $this_ocn;
+              }
               //"lastUpdateDate": "2020-05-08T05:17:29.700-04:00",
               $parts = explode('T',$json["lastUpdateDate"]);
               $date = $parts[0];
@@ -198,56 +204,56 @@ class Collection_Management_Service extends OCLC_Service {
               $parts = explode('-',$date);
               $json["yyyymmdd"] = implode('',$parts);
               $json["yymmdd"]=substr($json["yyyymmdd"], 2);
-              
-              
+
+
               //leader
               $json['leader'] = "00000nx  a2200121zi 4500";
-              
+
               //008 00-05
               $json["f008"] = $json["yymmdd"];
-              
+
               //008 06
               //"receiptStatus": "RECEIVED_AND_COMPLETE_OR_CEASED",
-              if (array_key_exists(strtolower($json["receiptStatus"]), $this->acq_status)) { 
+              if (array_key_exists(strtolower($json["receiptStatus"]), $this->acq_status)) {
                 $json["f008"] .= $this->acq_status[strtolower($json["receiptStatus"])];
               }
               else {
                 $json["f008"] .= 'u';
               }
-              
+
               //008 07
               $json["f008"] .= 'u';
-              
+
               //008 08-11
               $json["f008"] .= '    ';
-              
+
               //008 12
               $json["f008"] .= '8';
-              
+
               //008 13-15
               $json["f008"] .= '   ';
 
               //008 16
               $json["f008"] .= '4';
-              
+
               //008 17-19
               $json["f008"] .= '001';
-              
+
               //008 20
               $json["f008"] .= 'u';
-              
+
               //008 21
               $json["f008"] .= 'u';
-              
+
               //008 22-24
               $json["f008"] .= 'und';
 
               //008 25
               $json["f008"] .= '0';
-              
+
               //008 26-31
               $json["f008"] .= $json["yymmdd"];
-              
+
               $loader = new Twig_Loader_Filesystem(__DIR__);
               $twig = new Twig_Environment($loader, array(
               //specify a cache directory only in a production setting
@@ -268,7 +274,7 @@ class Collection_Management_Service extends OCLC_Service {
           }
         }
       }
-      
+
     }
     return $result;
   }

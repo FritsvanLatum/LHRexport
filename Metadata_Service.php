@@ -21,6 +21,7 @@ class Metadata_Service extends OCLC_Service {
   public $metadata_headers = ['Accept' => 'application/atom+xml'];
 
   private $ocn = '';
+  public $ocn_001 = '';
 
   /*
   <?xml version="1.0" encoding="UTF-8"?>
@@ -42,7 +43,7 @@ class Metadata_Service extends OCLC_Service {
   private $only_marc_record = TRUE;
   public $metadata_xml = null;
   public $metadata_json = null;
-  public $metadata = null;
+  //public $metadata = null;
 
   private $marc_template_file = './metadata_templates/LHR_template.marc';
   private $marcxml_template_file = './metadata_templates/LHR_template_marc.xml';
@@ -60,24 +61,25 @@ class Metadata_Service extends OCLC_Service {
     $json['metadata_headers'] = $this->metadata_headers;
     $json['metadata_params'] = $this->metadata_params;
     $json['ocn'] = $this->ocn;
-    $json['metadata'] = $this->metadata;
+    //$json['metadata'] = $this->metadata;
+    $json['metadata_json'] = $this->metadata_json;
     $json['metadata_xml'] = $this->metadata_xml;
     return json_encode($json, JSON_PRETTY_PRINT);
   }
 
   public function metadata_str($type) {
     if (strpos($this->metadata_headers['Accept'],'json')) {
-      if ($type == 'json') return json_encode($this->metadata, JSON_PRETTY_PRINT);
+      if ($type == 'json') return json_encode($this->metadata_json, JSON_PRETTY_PRINT);
       if ($type == 'xml') return '';
       if ($type == 'html') {
-        $str = '<pre>'.json_encode($this->metadata, JSON_PRETTY_PRINT).'</pre>';
+        $str = '<pre>'.json_encode($this->metadata_json, JSON_PRETTY_PRINT).'</pre>';
         return $str;
       }
       return $this->__toString();
     }
     else {
       //XML:
-      if ($type == 'json') return json_encode($this->metadata, JSON_PRETTY_PRINT);
+      if ($type == 'json') return json_encode($this->metadata_json, JSON_PRETTY_PRINT);
       if ($type == 'xml') return $this->metadata_xml;
       if ($type == 'html') {
         $str = str_replace(array('<','>'), array('&lt;','&gt;'), $this->metadata_xml);
@@ -166,7 +168,7 @@ class Metadata_Service extends OCLC_Service {
           $json_errmsg = json_last_error_msg();
           if ($json_errno == JSON_ERROR_NONE) {
             //store result in this object as an array
-            $this->metadata = $received;
+            $this->metadata_json = $received;
             $this->metadata_xml = '';
             return TRUE;
           }
@@ -180,7 +182,14 @@ class Metadata_Service extends OCLC_Service {
           $xmlDoc->preserveWhiteSpace = FALSE;
           $xmlDoc->formatOutput = TRUE;
           $xmlDoc->loadXML($result);
-          $this->metadata = $this->xml2json($xmlDoc,[]);
+          //$this->metadata = $this->xml2json($xmlDoc,[]);
+          $nodes = $xmlDoc->getElementsByTagName('controlfield');
+          foreach( $nodes as $node ) {
+            //attributes->getNamedItem("version")->nodeValue; 
+            if ($node->getAttribute('tag') == '001') {
+              $this->ocn_001 = $node->nodeValue;
+            }
+          }
 
           $xml_rec = new DOMDocument();
           $xml_rec->preserveWhiteSpace = FALSE;
@@ -203,7 +212,7 @@ class Metadata_Service extends OCLC_Service {
     }
   }
 
-  public function json2marc($type = 'marc') {
+/*  public function json2marc($type = 'marc') {
     $result = FALSE;
     if (strpos($this->metadata_headers['Accept'],'atom+json') > 0) {
       if (array_key_exists("entries",$this->metadata)) {
@@ -234,18 +243,6 @@ class Metadata_Service extends OCLC_Service {
               //"receiptStatus": "RECEIVED_AND_COMPLETE_OR_CEASED",
               if (array_key_exists(strtolower($json["receiptStatus"]), $this->acq_status)) $json["acq_status"] = $this->acq_status[strtolower($json["receiptStatus"])];
               
-              /*"holding": [
-                    {
-                        "pieceDesignation": [
-                            "09000006742580"
-                        ],
-                        "note": [],
-                        "useRestriction": [],
-                        "cost": [
-                            {
-                                "currency": "EUR",
-                                "amount": 10300,
-                                "qualifier": null*/
               
               $loader = new Twig_Loader_Filesystem(__DIR__);
               $twig = new Twig_Environment($loader, array(
@@ -267,7 +264,7 @@ class Metadata_Service extends OCLC_Service {
       
     }
     return $result;
-  }
+  }*/
 
 }
 

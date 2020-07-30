@@ -1,7 +1,7 @@
 =LDR  {{leader}}
 =001  {{lhr_id}}
 =003  OCoLC
-=004  ocn{{ocn_id}}
+=004  {{ocn_id}}
 =007  zu
 =008  {{f008}}
 =035  \\$a(OCoLC){{lhr_id}}
