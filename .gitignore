@@ -3,6 +3,7 @@ composer.*
 *.zip
 *.log
 *.doc
+*.docx
 *.txt
 *.tgz
 *.~vsdx
@@ -10,3 +11,5 @@ keys_*.php
 test_data.html
 vendor/
 WMS_export/
+marcedit/
+
